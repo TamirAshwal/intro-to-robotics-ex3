@@ -44,6 +44,7 @@ namespace argos {
       CVector2 m_cClosestPointToTarget;
       Real m_cClosestDistance;
       bool m_obtacleCInvestagted;
+      int m_nStepsSinceHit;
 
       CVector2 getRobotPosition() const;
       CRadians getRobotHeading() const;

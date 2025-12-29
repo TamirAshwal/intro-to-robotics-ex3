@@ -33,8 +33,10 @@ namespace argos {
       m_eState = STATE_FORWARD;
       m_cHitObstacle = CVector2(0, 0);
       m_cClosestPointToTarget = CVector2(0, 0);
+      // big starting value
       m_cClosestDistance = 10000;
       m_obtacleCInvestagted = false;
+      m_nStepsSinceHit = 0;
       }
    
    void ControllerBug1::ControlStep() {
@@ -43,8 +45,26 @@ namespace argos {
      
       switch(m_eState){
          case STATE_FORWARD:{
+            CVector2 currentPos = getRobotPosition();
+            CVector2 targetPos(m_cTargetPosition.GetX(), m_cTargetPosition.GetY());
+            Real distToTarget = (currentPos - targetPos).Length();
+   
+   if (distToTarget < 0.10) { 
+      m_eState = STATE_TARGET;
+      m_pcColoredLEDs->SetRingLEDs(CColor::GREEN);
+      m_pcWheels->SetLinearVelocity(0.0, 0.0);
+      std::cout << "========================================" << std::endl;
+      std::cout << "TARGET REACHED!" << std::endl;
+      std::cout << "Final position: (" << currentPos.GetX() 
+                << ", " << currentPos.GetY() << ")" << std::endl;
+      std::cout << "========================================" << std::endl;
+      return;
+   }
             if(isObstacleAhead()){
                // obtacle detected go to obtacle follow and change light
+               m_cHitObstacle = getRobotPosition();
+               m_obtacleCInvestagted = false;
+               m_nStepsSinceHit = 0;
                m_eState = STATE_OBSTABLE_FOLLOWING;
                m_pcColoredLEDs->SetRingLEDs(CColor:: YELLOW);
                std::cout << "Obstacle detected." << std::endl;
@@ -90,6 +110,23 @@ namespace argos {
          }
          case STATE_OBSTABLE_FOLLOWING:{
             // your obstacle following code here
+            updateClosestPoint();
+            m_nStepsSinceHit++; 
+         
+            if (m_nStepsSinceHit  > 50 && !m_obtacleCInvestagted && completedLoop()) {
+               m_obtacleCInvestagted = true;
+               m_eState = STATE_OBSTACLE_RETURN;
+               m_pcColoredLEDs->SetRingLEDs(CColor::YELLOW);
+               m_pcWheels->SetLinearVelocity(0.0, 0.0);
+               std::cout << "Completed full loop! Stopping." << std::endl;
+               std::cout << "Started at: (" << m_cHitObstacle.GetX() 
+                        << ", " << m_cHitObstacle.GetY() << ")" << std::endl;
+               std::cout << "Current position: (" << getRobotPosition().GetX() 
+                        << ", " << getRobotPosition().GetY() << ")" << std::endl;
+               return;
+            }
+
+            
             if(isObstacleAhead()){
                m_pcWheels->SetLinearVelocity(-0.1f, 0.1f);
             }
@@ -100,11 +137,37 @@ namespace argos {
          break;
          }
          case STATE_OBSTACLE_RETURN:{
-            // your obstacle return code here
-         break;
+            CVector2 currentPos = getRobotPosition();
+            Real distToClosest = (currentPos - m_cClosestPointToTarget).Length();
+            if (distToClosest < 0.12) {  // 12 ס"מ טולרנס
+               m_eState = STATE_FORWARD;
+               m_pcColoredLEDs->SetRingLEDs(CColor::BLUE);
+               
+               std::cout << "========================================" << std::endl;
+               std::cout << "Reached closest point! Stopping." << std::endl;
+               std::cout << "Position: (" << currentPos.GetX() 
+                        << ", " << currentPos.GetY() << ")" << std::endl;
+               std::cout << "Distance to target from here: " 
+                        << m_cClosestDistance << " meters" << std::endl;
+               std::cout << "========================================" << std::endl;
+               }
+            else{
+               if(isObstacleAhead()){
+                  m_pcWheels->SetLinearVelocity(-0.1f, 0.1f);
+               }
+               else{
+                  followObstacle();
+               }
+            }
+            break;
+
+            
          }
+        
          case STATE_TARGET:{
             // your target reached code here
+            m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
+            m_pcColoredLEDs->SetRingLEDs(CColor::GREEN);
          break;
          }
          // end of switch case
@@ -171,8 +234,19 @@ namespace argos {
       Real distanceToHitPoint = (currPosition - m_cHitObstacle).Length();
       const Real epsilon = 0.15;
       return distanceToHitPoint < epsilon;
-
    }
+   // fucntion that updated the closest point and the distance to the target
+   void ControllerBug1::updateClosestPoint(){
+      CVector2 currentPos = getRobotPosition();
+      CVector2 targetPos(m_cTargetPosition.GetX(), m_cTargetPosition.GetY());
+      Real currentDistance = (currentPos - targetPos).Length();
+      // if we found a closer point update the closest point and distance
+      if (currentDistance < m_cClosestDistance) {
+         m_cClosestDistance = currentDistance;
+         m_cClosestPointToTarget = currentPos;
+      }
+   }
+
 
 
 
