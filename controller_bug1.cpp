@@ -1,8 +1,5 @@
 // 209374867
 #include "controller_bug1.hpp"
-// delete later
-#include <iostream>
-// end delete later
 
 namespace argos {
    
@@ -34,7 +31,7 @@ namespace argos {
       m_cHitObstacle = CVector2(0, 0);
       m_closestPointToTarget = CVector2(0, 0);
       // big starting value
-      m_cClosestDistance = 10000;
+      m_closestDistance = 10000;
       m_obstacleInvestagted = false;
       m_stepsSinceHit = 0;
       }
@@ -45,7 +42,6 @@ namespace argos {
          case STATE_FORWARD:{
             forwardState();            
             break;
-      
          }
          case STATE_OBSTABLE_FOLLOWING:{
            
@@ -115,13 +111,13 @@ namespace argos {
    }
    // fucntion that updated the closest point and the distance to the target
    void ControllerBug1::updateClosestPoint(){
-      CVector2 currentPos = getRobotPosition();
+      CVector2 currPos = getRobotPosition();
       CVector2 targetPos(m_cTargetPosition.GetX(), m_cTargetPosition.GetY());
-      Real currentDistance = (currentPos - targetPos).Length();
+      Real currentDistance = (currPos - targetPos).Length();
       // if we found a closer point update the closest point and distance
-      if (currentDistance < m_cClosestDistance) {
-         m_cClosestDistance = currentDistance;
-         m_closestPointToTarget = currentPos;
+      if (currentDistance < m_closestDistance) {
+         m_closestDistance = currentDistance;
+         m_closestPointToTarget = currPos;
       }
    }
    void ControllerBug1:: forwardState(){
@@ -142,6 +138,7 @@ namespace argos {
       Real distanceToTarget = (currPos - targetPos).Length();
       return distanceToTarget < .10f;
    }
+   // if we reached the target stop and change the light to green
    void ControllerBug1:: toTargetState(){
       CVector2 currPos = getRobotPosition();
       m_eState = STATE_TARGET;
@@ -158,14 +155,13 @@ namespace argos {
       m_pcColoredLEDs->SetRingLEDs(CColor:: YELLOW);
    }
    void ControllerBug1::moveToTarget(){
+      // get the robot heading and position
       CRadians currHeading = getRobotHeading();
       currHeading.UnsignedNormalize();
       CVector2 currPos  = getRobotPosition();
       CVector2 targetPos(m_cTargetPosition.GetX(), m_cTargetPosition.GetY());
-
       // calcaulte the vector from the robot to the target
       CVector2 toTarget = targetPos - currPos;
-   
       // calculate the heading needed
       CRadians requiredHeading = toTarget.Angle();
       requiredHeading.UnsignedNormalize();
@@ -187,7 +183,6 @@ namespace argos {
       else {
          m_pcWheels->SetLinearVelocity(.154f, .154f);
       }   
-
    }
    void ControllerBug1::obstacleFollowState(){
       updateClosestPoint();
@@ -197,6 +192,7 @@ namespace argos {
          toObstacleReturnState();
          return;
       }
+      // if not continue to follow the obstacle
       followObstacle();
    }
    void ControllerBug1:: followObstacle(){
@@ -214,11 +210,11 @@ namespace argos {
          m_pcWheels->SetLinearVelocity(.10f + turnCorrection, .10f - turnCorrection);
       }
    }
+   // move to onstacle return meaning go to the closest point to the target we found while folowwing the obstacle
    void ControllerBug1:: toObstacleReturnState(){
       m_obstacleInvestagted = true;
       m_eState = STATE_OBSTACLE_RETURN;
       m_pcColoredLEDs->SetRingLEDs(CColor::YELLOW);
-      
    }
    // this function checks if we reached to the closest point if so change to forward state else continue to follow the obstacle
    void ControllerBug1::obstacleReturnState(){

@@ -10,27 +10,26 @@
 
 namespace argos {
 
-   class ControllerBug1 : public CCI_Controller {
+   class ControllerBug2 : public CCI_Controller {
 
    public:
 
-      ControllerBug1() {}
+      ControllerBug2() {}
 
-      virtual ~ControllerBug1() {}
+      virtual ~ControllerBug2() {}
 
       void Init(TConfigurationNode& t_tree) override;
 
       void ControlStep() override;
 
    private:
-      enum Estate {
+   enum Estate {
          STATE_FORWARD,
          STATE_OBSTABLE_FOLLOWING,
-         STATE_OBSTACLE_RETURN,
          STATE_TARGET,
       };
       Estate m_eState;
-
+      
       /* Sensors and Actuators */
       CCI_PiPuckDifferentialDriveActuator* m_pcWheels = nullptr;
       CCI_PiPuckColorLEDsActuator* m_pcColoredLEDs = nullptr;
@@ -39,27 +38,22 @@ namespace argos {
       CCI_PiPuckSystemSensor* m_pcSystem = nullptr;
       CCI_PositioningSensor* m_pcPositioning = nullptr;
       CVector3 m_cTargetPosition;
-      bool isObstacleAhead() const;
-      double getRightReading() const;
-      CVector2 m_cHitObstacle;
-      CVector2 m_closestPointToTarget;
-      Real m_closestDistance;
-      bool m_obstacleInvestagted;
-      int m_stepsSinceHit;
-      // fucntions
+      CVector2 m_startingPos;
+      CVector2 m_cMLineDirection;     
+      CRadians m_mLineHeading;   
+      CVector2 m_hitPoint;   
+      Real m_distanceAtHit; 
+      // functions
       CVector2 getRobotPosition() const;
       CRadians getRobotHeading() const;
-      void followObstacle() const;
-      bool completedLoop() const;
-      void updateClosestPoint();
-      void forwardState();
       bool reachedTarget() const;
-      void toTargetState();
-      void toObstacleFollowState();
+      void targetState();
       void moveToTarget();
-      void obstacleFollowState();
+      bool isObstacleAhead() const;
+      void toObstacleFollowState();
+      double getRightReading() const;
       void followObstacle();
-      void toObstacleReturnState();
-      void obstacleReturnState();
+      void obstacleFollowState();
+      bool isOnMLine() const;
    };
 }
