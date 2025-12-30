@@ -41,10 +41,10 @@ namespace argos {
       bool isObstacleAhead() const;
       double getRightReading() const;
       CVector2 m_cHitObstacle;
-      CVector2 m_cClosestPointToTarget;
+      CVector2 m_closestPointToTarget;
       Real m_cClosestDistance;
-      bool m_obtacleCInvestagted;
-      int m_nStepsSinceHit;
+      bool m_obstacleInvestagted;
+      int m_stepsSinceHit;
 
       CVector2 getRobotPosition() const;
       CRadians getRobotHeading() const;
@@ -52,5 +52,14 @@ namespace argos {
       bool completedLoop() const;
       void updateClosestPoint();
       bool navigateToPoint(const CVector2& targetPoint);
+      void forwardState();
+      bool reachedTarget() const;
+      void toTargetState();
+      void toObstacleFollowState();
+      void moveToTarget();
+      void obstacleFollowState();
+      void followObstacle();
+      void toObstacleReturnState();
+      void obstacleReturnState();
    };
 }
